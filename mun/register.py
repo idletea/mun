@@ -11,19 +11,19 @@ COMPONENTS: dict[str, Component] = {}
 
 
 class DefaultComponent:
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, *, ctx: Context, **kwargs: Any) -> None:
         pass
 
-    async def start(self, *, mun: Context) -> None:
+    async def start(self, *, ctx: Context) -> None:
         raise NotImplementedError()
 
-    async def run(self, *, mun: Context) -> None:
+    async def run(self, *, ctx: Context) -> None:
         raise NotImplementedError()
 
-    async def stop(self, *, mun: Context) -> None:
+    async def stop(self, *, ctx: Context) -> None:
         raise NotImplementedError()
 
-    async def reset(self, *, mun: Context) -> None:
+    async def reset(self, *, ctx: Context) -> None:
         raise NotImplementedError()
 
 

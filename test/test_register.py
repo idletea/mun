@@ -9,18 +9,18 @@ from mun.component import Context
 
 @register.component(with_defaults=True)
 class Defaulted:
-    def __init__(self, **kwargs: Any) -> None: ...
-    async def start(self, *, mun: Context) -> None:  # noqa: ARG002
+    def __init__(self, *, ctx: Context, **kwargs: Any) -> None: ...
+    async def start(self, *, ctx: Context) -> None:  # noqa: ARG002
         raise FileNotFoundError("test error")
 
 
 @register.component
 class NotDefaulted:
-    def __init__(self, **kwargs: Any) -> None: ...
-    async def start(self, *, mun: Context) -> None: ...
-    async def run(self, *, mun: Context) -> None: ...
-    async def stop(self, *, mun: Context) -> None: ...
-    async def reset(self, *, mun: Context) -> None: ...
+    def __init__(self, *, ctx: Context, **kwargs: Any) -> None: ...
+    async def start(self, *, ctx: Context) -> None: ...
+    async def run(self, *, ctx: Context) -> None: ...
+    async def stop(self, *, ctx: Context) -> None: ...
+    async def reset(self, *, ctx: Context) -> None: ...
 
 
 def test_register_component():
@@ -29,13 +29,12 @@ def test_register_component():
 
 
 @pytest.mark.anyio
-async def test_with_defaults_simple():
-    defaulted = register.COMPONENTS["defaulted"]()
-    mun = Context()
+async def test_with_defaults_simple(ctx):
+    defaulted = register.COMPONENTS["defaulted"](ctx=ctx)
 
     # defaulting doesn't override defined methods
     with pytest.raises(FileNotFoundError):
-        await defaulted.start(mun=mun)
+        await defaulted.start(ctx=ctx)
 
     implemented = util.members(Defaulted)
     default_impls = util.members(register.COMPONENTS["defaulted"]) - implemented
@@ -43,4 +42,4 @@ async def test_with_defaults_simple():
 
     for member in default_impls:
         with pytest.raises(NotImplementedError):
-            await getattr(defaulted, member)(mun=mun)
+            await getattr(defaulted, member)(ctx=ctx)

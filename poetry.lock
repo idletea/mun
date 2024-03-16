@@ -25,6 +25,7 @@ files = [
 [package.dependencies]
 idna = ">=2.8"
 sniffio = ">=1.1"
+trio = {version = ">=0.23", optional = true, markers = "extra == \"trio\""}
 
 [package.extras]
 doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
@@ -906,4 +907,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8803d202c3b9bd6def2d6ec932702053d2a97e4a6c7029f60448177a78a6af77"
+content-hash = "fd93b3464ff17a21ab7526696a775ad9416936349a9effed083227320b7ae5e0"
