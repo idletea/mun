@@ -14,7 +14,7 @@ class Defaulted:
         raise FileNotFoundError("test error")
 
 
-@register.component()
+@register.component
 class NotDefaulted:
     def __init__(self, **kwargs: Any) -> None: ...
     async def start(self, *, mun: Context) -> None: ...

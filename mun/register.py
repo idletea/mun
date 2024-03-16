@@ -27,7 +27,9 @@ class DefaultComponent:
         raise NotImplementedError()
 
 
-def component(*, with_defaults: bool = False) -> Callable[[type], type]:
+def component(
+    cls: type | None = None, *, with_defaults: bool = False
+) -> Callable[[type], type]:
     """Make a component known to the components registry.
 
     The `with_defaults` argument will implicitly add a no-op base class as a
@@ -49,4 +51,6 @@ def component(*, with_defaults: bool = False) -> Callable[[type], type]:
 
         return component
 
-    return inner
+    # I don't know how to properly type a decorator that
+    # can either be be used bare or called to pass args
+    return inner(cls) if cls else inner  # type: ignore[return-value]
