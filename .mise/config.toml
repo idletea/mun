@@ -1,0 +1,15 @@
+[tools]
+python = "3.12"
+
+[env]
+_.python.venv = { path = "{{config_root}}/venv", create = true }
+
+[tasks]
+default = { depends = ["lint"] }
+lint = { depends = ["lint:*"] }
+    [tasks."lint:type-check"]
+    run = "mypy --strict mun"
+    [tasks."lint:format"]
+    run = "ruff format --diff"
+[tasks.test]
+run = "pytest"

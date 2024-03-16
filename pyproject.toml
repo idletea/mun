@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "mun"
+version = "0.0.0"
+description = "A tool for all the dependencies in orbit of your dev environment"
+authors = ["Terry Kerr <terry@idletea.net>"]
+license = "MIT"
+readme = "readme.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.6.3"
+click = "^8.1.7"
+rich = "^13.7.1"
+anyio = "^4.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pylsp-mypy = "^0.6.8"
+python-lsp-server = "^1.10.0"
+pylsp-rope = "^0.1.11"
+python-lsp-ruff = "^2.2.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.1.1"
+pyfakefs = "^5.3.5"
+pytest-mock = "^3.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff.lint]
+select = [
+    "ARG", "B", "C", "DTZ", "E", "ERA", "F",
+    "I", "LOG", "PLE", "PTH", "Q", "RET",
+    "RUF", "SIM", "T", "TID", "TRY",
+]
+ignore = [
+    "TRY003", # aggressive limit on exception error message length
+]
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+no-lines-before = ["first-party", "local-folder", "third-party"]
