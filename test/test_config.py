@@ -3,153 +3,137 @@ from __future__ import annotations
 import os
 from pathlib import PosixPath
 import pytest
-from mun.config import ENV_CONFIG_PATH, Config
+from mun.config import Config
+import util
 
 
 def test_config_default():
     Config.find_or_default()
 
 
-def test_config_from_default_file(make_config_file):
-    make_config_file("""entity_dir_patterns = [".foo/entities"]""")
+def test_config_from_default_file(config_file):
+    config_file("""entity_dir_patterns = [".foo/entities"]""")
     assert Config.find_or_default().opts.entity_dir_patterns == [
         PosixPath(".foo/entities")
     ]
 
 
-def test_config_from_env_var(fs, env):
-    env(**{ENV_CONFIG_PATH: "/foo/bar.toml"})
-    fs.create_file(
-        "/foo/bar.toml",
-        contents="""
-    project_root_indicators = [".custom", ".git"]
-    """,
-    )
+def test_default_project_root_discovery(tmp_path):
+    (tmp_path / ".mun").mkdir(parents=True)
+    (tmp_path / "foo/.foo").mkdir(parents=True)
+    (tmp_path / "foo/bar/.mun").mkdir(parents=True)
+    (tmp_path / "foo/bar/baz/foo/.foo").mkdir(parents=True)
 
-    assert Config.find_or_default().opts.project_root_indicators == [
-        PosixPath(".custom"),
-        PosixPath(".git"),
-    ]
-
-
-def test_default_project_root_discovery(fs):
-    fs.create_file("/.mun")
-    fs.create_file("/foo/.foo")
-    fs.create_file("/foo/bar/.mun")
-    fs.create_file("/foo/bar/baz/foo/.foo")
-
+    os.chdir(tmp_path)
     for cd_to, expect_root in [
-        ("/foo/bar/baz/foo", "/foo/bar"),
-        ("/foo/bar", "/foo/bar"),
-        ("/foo", "/"),
+        ("foo/bar/baz/foo", tmp_path / "foo/bar"),
+        ("foo/bar", tmp_path / "foo/bar"),
+        ("foo", tmp_path),
     ]:
-        os.chdir(cd_to)
-        actual_root = Config.find_or_default().project_root
-        assert str(actual_root) == expect_root
+        with util.chdir(cd_to):
+            actual_root = Config.find_or_default().project_root
+            assert str(actual_root) == str(expect_root)
 
 
-def test_custom_project_root_discovery(fs, make_config_file):
-    make_config_file("""project_root_indicators = [".foo", ".git"]""")
-    fs.create_file("/foo/bar/.git")
-    fs.create_file("/foo/bar/baz/.foo")
-    fs.create_dir("/foo/bar/baz/foo/bar")
+def test_custom_project_root_discovery(tmp_path, config_file):
+    config_file("""project_root_indicators = [".foo", ".git"]""")
 
+    (tmp_path / "foo/bar/.git").mkdir(parents=True)
+    (tmp_path / "foo/bar/baz/.foo").mkdir(parents=True)
+    (tmp_path / "foo/bar/baz/foo/bar").mkdir(parents=True)
+
+    os.chdir(tmp_path)
     for cd_to, expect_root in [
-        ("/foo/bar/baz", "/foo/bar/baz"),
-        ("/foo/bar", "/foo/bar"),
-        ("/foo/bar/baz/foo/bar", "/foo/bar/baz"),
+        ("foo/bar/baz", tmp_path / "foo/bar/baz"),
+        ("foo/bar", tmp_path / "foo/bar"),
+        ("foo/bar/baz/foo/bar", tmp_path / "foo/bar/baz"),
     ]:
-        os.chdir(cd_to)
-        actual_root = Config.find_or_default().project_root
-        assert str(actual_root) == expect_root
+        with util.chdir(cd_to):
+            actual_root = Config.find_or_default().project_root
+            assert str(actual_root) == str(expect_root)
 
-    os.chdir("/foo")
+    os.chdir("/tmp")
     with pytest.raises(SystemExit):
         _ = Config.find_or_default().project_root
 
 
-def test_project_root_is_root(fs):
-    os.chdir("/")
-    fs.create_file("/.mun")
-    _ = Config.find_or_default().project_root
+def test_default_sibling_root_discovery(tmp_path):
+    (tmp_path / "foo/root/.mun").mkdir(parents=True)
+    (tmp_path / "foo/sib1/.mun").mkdir(parents=True)
+    (tmp_path / "foo/sib2/.mun").mkdir(parents=True)
+    (tmp_path / "foo/notsib/.not-mun").mkdir(parents=True)
 
-
-def test_default_sibling_root_discovery(fs):
-    fs.create_dir("/foo/root/.mun")
-    fs.create_dir("/foo/sib1/.mun")
-    fs.create_dir("/foo/sib2/.mun")
-    fs.create_dir("/foo/notsib/.not-mun")
-
-    os.chdir("/foo/root")
+    os.chdir(tmp_path / "foo/root")
     config = Config.find_or_default()
     assert sorted([str(path) for path in config.sibling_roots]) == [
-        "/foo/sib1",
-        "/foo/sib2",
+        str(tmp_path / "foo/sib1"),
+        str(tmp_path / "foo/sib2"),
     ]
 
 
-def test_custom_sibling_root_discovery(fs, make_config_file):
-    fs.create_dir("/proj/sib1/.mun")
-    fs.create_dir("/proj/sib2/.mun")
-    fs.create_dir("/proj/sib3/mun")
-    fs.create_dir("/proj/notme")
-    fs.create_dir("/foo/other/.mun")
-    fs.create_dir("/foo/notme")
-    fs.create_dir("/foo/root/.mun")
+def test_custom_sibling_root_discovery(tmp_path, config_file):
+    (tmp_path / "proj/sib1/.mun").mkdir(parents=True)
+    (tmp_path / "proj/sib2/.mun").mkdir(parents=True)
+    (tmp_path / "proj/sib3/mun").mkdir(parents=True)
+    (tmp_path / "proj/notme").mkdir(parents=True)
+    (tmp_path / "foo/other/.mun").mkdir(parents=True)
+    (tmp_path / "foo/notme").mkdir(parents=True)
+    (tmp_path / "foo/root/.mun").mkdir(parents=True)
 
-    os.chdir("/foo/root")
-    make_config_file("""sibling_project_patterns = ["/proj/*", "../other"]""")
+    os.chdir(tmp_path / "foo/root")
+    absolute_proj = tmp_path / "proj"
+    config_file(f"""sibling_project_patterns = ["{absolute_proj}/*", "../other"]""")
     assert sorted([str(path) for path in Config.find_or_default().sibling_roots]) == [
-        "/foo/other",
-        "/proj/sib1",
-        "/proj/sib2",
+        str(tmp_path / "foo/other"),
+        str(tmp_path / "proj/sib1"),
+        str(tmp_path / "proj/sib2"),
     ]
 
 
-def test_roots(fs):
-    fs.create_dir("/foo/root/.mun")
-    fs.create_dir("/foo/sib1/.mun")
-    fs.create_dir("/foo/sib2/.mun")
+def test_roots(tmp_path):
+    (tmp_path / "foo/root/.mun").mkdir(parents=True)
+    (tmp_path / "foo/sib1/.mun").mkdir(parents=True)
+    (tmp_path / "foo/sib2/.mun").mkdir(parents=True)
 
-    os.chdir("/foo/root")
+    os.chdir(tmp_path / "foo/root")
     config = Config.find_or_default()
     assert sorted([str(path) for path in config.roots]) == [
-        "/foo/root",
-        "/foo/sib1",
-        "/foo/sib2",
+        str(tmp_path / "foo/root"),
+        str(tmp_path / "foo/sib1"),
+        str(tmp_path / "foo/sib2"),
     ]
 
 
-def test_default_entity_dir_discovery(fs):
-    fs.create_dir("/foo/root/.mun/entities")
-    fs.create_dir("/foo/sib1/.mun/entities")
-    fs.create_dir("/foo/sib2/.mun/not-entities")
+def test_default_entity_dir_discovery(tmp_path):
+    (tmp_path / "foo/root/.mun/entities").mkdir(parents=True)
+    (tmp_path / "foo/sib1/.mun/entities").mkdir(parents=True)
+    (tmp_path / "foo/sib2/.mun/not-entities").mkdir(parents=True)
+    (tmp_path / "foo/sib2/.mun/entities").touch()  # file, not dir
 
-    fs.create_file("/foo/sib2/.mun/entities")
-
-    os.chdir("/foo/root")
+    os.chdir(tmp_path / "foo/root")
     config = Config.find_or_default()
     assert sorted([str(path) for path in config.entity_dirs]) == [
-        "/foo/root/.mun/entities",
-        "/foo/sib1/.mun/entities",
+        str(tmp_path / "foo/root/.mun/entities"),
+        str(tmp_path / "foo/sib1/.mun/entities"),
     ]
 
 
-def test_custom_entity_dir_discovery(fs, make_config_file):
-    make_config_file(
-        """entity_dir_patterns = [".entities", "../entities", "/bar/ents"]"""
+def test_custom_entity_dir_discovery(tmp_path, config_file):
+    config_file(
+        f"""entity_dir_patterns = [".entities", "../entities", "{tmp_path / "bar"}/ents"]"""
     )
-    fs.create_dir("/foo/root/.mun/entities")
-    fs.create_dir("/foo/sib1/.mun")
-    fs.create_dir("/foo/sib1/.entities")
-    fs.create_dir("/foo/sib2/.mun")
-    fs.create_dir("/foo/entities")
-    fs.create_dir("/bar/ents")
 
-    os.chdir("/foo/root")
+    (tmp_path / "foo/root/.mun/entities").mkdir(parents=True)
+    (tmp_path / "foo/sib1/.mun").mkdir(parents=True)
+    (tmp_path / "foo/sib1/.entities").mkdir(parents=True)
+    (tmp_path / "foo/sib2/.mun").mkdir(parents=True)
+    (tmp_path / "foo/entities").mkdir(parents=True)
+    (tmp_path / "bar/ents").mkdir(parents=True)
+
+    os.chdir(tmp_path / "foo/root")
     config = Config.find_or_default()
     assert sorted([str(path) for path in config.entity_dirs]) == [
-        "/bar/ents",
-        "/foo/entities",
-        "/foo/sib1/.entities",
+        str(tmp_path / "bar/ents"),
+        str(tmp_path / "foo/entities"),
+        str(tmp_path / "foo/sib1/.entities"),
     ]

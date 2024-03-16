@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable
 import pytest
 from mun.component import Context
-from mun.config import Config
+from mun.config import ENV_CONFIG_PATH, Config
 
 ROOT_INDICATORS_CONFIG = """
 project_root_indicators = [".custom", ".git"]
@@ -21,16 +21,21 @@ def env(mocker):
 
 
 @pytest.fixture
-def make_config_file(fs) -> Callable[[str], None]:
+def config_file(tmp_path, env) -> Callable[[str], None]:
     def inner(contents: str) -> None:
-        home = Path("~").expanduser()
-        fs.create_file(home / ".config/mun/config.toml", contents=contents)
+        dir = tmp_path / "__mun_test"
+        dir.mkdir()
+        file = dir / "config.toml"
+        env(**{ENV_CONFIG_PATH: str(file)})
+        with file.open("w+") as fp:
+            fp.write(contents)
 
     return inner
 
 
 @pytest.fixture
-def config() -> Config:
+def config(config_file) -> Config:
+    config_file("")
     return Config.find_or_default()
 
 
