@@ -3,22 +3,22 @@ from __future__ import annotations
 import os
 from pathlib import PosixPath
 import pytest
-from mun.config import Config
 import util
+from mun.config import Config
 
 
 def test_config_default():
     Config.find_or_default()
 
 
-def test_config_from_default_file(config_file):
+def test_config_from_default_file(config_file) -> None:
     config_file("""entity_dir_patterns = [".foo/entities"]""")
     assert Config.find_or_default().opts.entity_dir_patterns == [
         PosixPath(".foo/entities")
     ]
 
 
-def test_default_project_root_discovery(tmp_path):
+def test_default_project_root_discovery(tmp_path) -> None:
     (tmp_path / ".mun").mkdir(parents=True)
     (tmp_path / "foo/.foo").mkdir(parents=True)
     (tmp_path / "foo/bar/.mun").mkdir(parents=True)
@@ -35,7 +35,7 @@ def test_default_project_root_discovery(tmp_path):
             assert str(actual_root) == str(expect_root)
 
 
-def test_custom_project_root_discovery(tmp_path, config_file):
+def test_custom_project_root_discovery(tmp_path, config_file) -> None:
     config_file("""project_root_indicators = [".foo", ".git"]""")
 
     (tmp_path / "foo/bar/.git").mkdir(parents=True)
@@ -57,7 +57,7 @@ def test_custom_project_root_discovery(tmp_path, config_file):
         _ = Config.find_or_default().project_root
 
 
-def test_default_sibling_root_discovery(tmp_path):
+def test_default_sibling_root_discovery(tmp_path) -> None:
     (tmp_path / "foo/root/.mun").mkdir(parents=True)
     (tmp_path / "foo/sib1/.mun").mkdir(parents=True)
     (tmp_path / "foo/sib2/.mun").mkdir(parents=True)
@@ -71,7 +71,7 @@ def test_default_sibling_root_discovery(tmp_path):
     ]
 
 
-def test_custom_sibling_root_discovery(tmp_path, config_file):
+def test_custom_sibling_root_discovery(tmp_path, config_file) -> None:
     (tmp_path / "proj/sib1/.mun").mkdir(parents=True)
     (tmp_path / "proj/sib2/.mun").mkdir(parents=True)
     (tmp_path / "proj/sib3/mun").mkdir(parents=True)
@@ -90,7 +90,7 @@ def test_custom_sibling_root_discovery(tmp_path, config_file):
     ]
 
 
-def test_roots(tmp_path):
+def test_roots(tmp_path) -> None:
     (tmp_path / "foo/root/.mun").mkdir(parents=True)
     (tmp_path / "foo/sib1/.mun").mkdir(parents=True)
     (tmp_path / "foo/sib2/.mun").mkdir(parents=True)
@@ -104,7 +104,7 @@ def test_roots(tmp_path):
     ]
 
 
-def test_default_entity_dir_discovery(tmp_path):
+def test_default_entity_dir_discovery(tmp_path) -> None:
     (tmp_path / "foo/root/.mun/entities").mkdir(parents=True)
     (tmp_path / "foo/sib1/.mun/entities").mkdir(parents=True)
     (tmp_path / "foo/sib2/.mun/not-entities").mkdir(parents=True)
@@ -118,9 +118,10 @@ def test_default_entity_dir_discovery(tmp_path):
     ]
 
 
-def test_custom_entity_dir_discovery(tmp_path, config_file):
+def test_custom_entity_dir_discovery(tmp_path, config_file) -> None:
     config_file(
-        f"""entity_dir_patterns = [".entities", "../entities", "{tmp_path / "bar"}/ents"]"""
+        f"""entity_dir_patterns = """
+        f"""[".entities", "../entities", "{tmp_path / "bar"}/ents"]"""
     )
 
     (tmp_path / "foo/root/.mun/entities").mkdir(parents=True)

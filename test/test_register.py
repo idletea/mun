@@ -23,13 +23,13 @@ class NotDefaulted:
     async def reset(self, *, ctx: Context) -> None: ...
 
 
-def test_register_component():
+def test_register_component() -> None:
     assert register.COMPONENTS["defaulted"]
     assert register.COMPONENTS["not_defaulted"]
 
 
 @pytest.mark.anyio
-async def test_with_defaults_simple(ctx):
+async def test_with_defaults_simple(ctx) -> None:
     defaulted = register.COMPONENTS["defaulted"](ctx=ctx)
 
     # defaulting doesn't override defined methods

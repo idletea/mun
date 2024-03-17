@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from mun.component import Component, Context
 
 
-COMPONENTS: dict[str, Component] = {}
+COMPONENTS: dict[str, type[Component]] = {}
 
 
 class DefaultComponent:
@@ -47,7 +47,7 @@ def component(
             cls.__doc__ = component.__doc__
 
         name = camel_case(component.__name__)
-        COMPONENTS[name] = cast("Component", cls)
+        COMPONENTS[name] = cls
 
         return component
 
