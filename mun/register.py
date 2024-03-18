@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable
 from mun.util import camel_case
 
 if TYPE_CHECKING:
@@ -11,20 +11,11 @@ COMPONENTS: dict[str, type[Component]] = {}
 
 
 class DefaultComponent:
-    def __init__(self, *, ctx: Context, **kwargs: Any) -> None:
-        pass
-
-    async def start(self, *, ctx: Context) -> None:
-        raise NotImplementedError()
-
-    async def run(self, *, ctx: Context) -> None:
-        raise NotImplementedError()
-
-    async def stop(self, *, ctx: Context) -> None:
-        raise NotImplementedError()
-
-    async def reset(self, *, ctx: Context) -> None:
-        raise NotImplementedError()
+    def __init__(self, *, ctx: Context, **kwargs: Any) -> None: ...
+    async def start(self, *, ctx: Context) -> None: ...
+    async def run(self, *, ctx: Context) -> None: ...
+    async def stop(self, *, ctx: Context) -> None: ...
+    async def reset(self, *, ctx: Context) -> None: ...
 
 
 def component(

@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self
 import tomllib
 import mun.component  # noqa: F401 loaded for side-effect
+from mun.entity import Entity
 from mun.register import COMPONENTS
 
 if TYPE_CHECKING:
-    from mun.component import Component
+    from mun.component import Component, Context
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,16 @@ class Registry:
             entities.update(loaded_entities)
 
         return cls(entities=entities)
+
+    def instantiate_entity(self, name: str, ctx: Context) -> Entity:
+        entity_spec = self.entities[name]
+        return Entity(
+            name=entity_spec.name,
+            path=entity_spec.path,
+            components=[
+                spec.cls(ctx=ctx, **spec.args) for spec in entity_spec.components
+            ],
+        )
 
 
 def _entities_in_dir(dir: Path) -> dict[str, EntitySpec]:

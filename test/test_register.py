@@ -41,5 +41,4 @@ async def test_with_defaults_simple(ctx) -> None:
     assert len(default_impls)
 
     for member in default_impls:
-        with pytest.raises(NotImplementedError):
-            await getattr(defaulted, member)(ctx=ctx)
+        assert getattr(defaulted, member)
