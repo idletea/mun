@@ -6,6 +6,9 @@ authors = ["Terry Kerr <terry@idletea.net>"]
 license = "MIT"
 readme = "readme.md"
 
+[tool.poetry.scripts]
+mun = "mun:cli"
+
 [tool.poetry.dependencies]
 python = "^3.12"
 pydantic = "^2.6.3"

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self
 import tomllib
+import mun.component  # noqa: F401 loaded for side-effect
 from mun.register import COMPONENTS
 
 if TYPE_CHECKING:
@@ -26,12 +26,13 @@ class EntitySpec:
     name: str
     path: Path
     components: list[ComponentSpec]
-    depends: list[EntitySpec]
+    depends_on: list[EntitySpec]
 
 
 @dataclass
 class Registry:
     entities: dict[str, EntitySpec]
+    components: dict[str, type[Component]] = field(default_factory=lambda: COMPONENTS)
 
     @classmethod
     def from_dirs(cls: type[Self], *, entity_dirs: set[Path]) -> Self:
@@ -78,7 +79,7 @@ def _entity_in_doc(*, doc: dict[str, Any], path: Path) -> tuple[str, EntitySpec]
             name=name,
             path=path,
             components=_components_in_doc(doc),
-            depends=doc.get("depends", []),
+            depends_on=doc.get("depends_on", []),
         ),
     )
 

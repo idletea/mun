@@ -88,3 +88,11 @@ def test_entity_can_have_no_components(config, project_root) -> None:
     reg = Registry.from_dirs(entity_dirs=config.entity_dirs)
 
     assert not reg.entities["ent1"].components
+
+
+def test_entity_depends_on_discovery(config, project_root) -> None:
+    with (project_root / ".mun/entities/ent1.toml").open("w+") as fp:
+        fp.write("""depends_on = ["foo", "bar"]""")
+    reg = Registry.from_dirs(entity_dirs=config.entity_dirs)
+
+    assert reg.entities["ent1"].depends_on == ["foo", "bar"]
